@@ -115,5 +115,3 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-/env/eslint/node_modules/
-/env/github/.yarn/cache/
