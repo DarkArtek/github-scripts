@@ -1,0 +1,22 @@
+{
+  "name": "@darkartek/github-config",
+  "version": "1.0.0",
+  "repository": {
+    "url": "https://github.com/DarkArtek/github-scripts",
+    "directory": "env/github"
+  },
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node bin/update-webhooks.ts",
+    "lint": "concurrently -n lint: 'yarn:lint:*'",
+    "lint:eslint": "eslint .",
+    "lint:prettier": "prettier --check .",
+    "format": "concurrently -n format: 'yarn:format:*'",
+    "format:eslint": "yarn lint:eslint --fix",
+    "format:prettier": "yarn lint:prettier --write"
+  },
+  "dependencies": {
+  }
+}

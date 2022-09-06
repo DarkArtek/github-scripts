@@ -1,0 +1,23 @@
+name: 'Lint *.yml'
+
+on:
+  push:
+    branches:
+      - 'master'
+    paths:
+      - '**/*.yml'
+      - '**/*.yaml'
+
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    paths:
+      - '**/*.yml'
+      - '**/*.yaml'
+
+  workflow_dispatch:
+
+jobs:
+  lint:
+    uses: DarkArtek/github-scripts/.github/workflows/yamllint.yml@main

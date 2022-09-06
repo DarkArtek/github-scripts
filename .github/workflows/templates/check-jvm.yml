@@ -1,0 +1,15 @@
+name: 'Check'
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: DarkArtek/github-scripts/.github/workflows/gradle-run@main
+    permissions:
+      contents: read
+    with:
+      task: 'build'

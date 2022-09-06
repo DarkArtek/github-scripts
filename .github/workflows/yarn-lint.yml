@@ -1,0 +1,191 @@
+name: Yarn Lint
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        type: string
+        default: '18'
+      node-version-file:
+        required: false
+        type: string
+        default: ''
+      working-directory:
+        required: false
+        type: string
+        default: '.'
+      pre-script:
+        required: false
+        type: string
+        default: ''
+      post-script:
+        required: false
+        type: string
+        default: ''
+      reporter:
+        required: false
+        type: string
+        default: 'github-pr-review'
+      enable-eslint:
+        required: false
+        type: boolean
+        default: true
+      enable-prettier:
+        required: false
+        type: boolean
+        default: true
+      enable-stylelint:
+        required: false
+        type: boolean
+        default: false
+      stylelint-input:
+        required: false
+        type: string
+        default: '**/*.{css,scss,sass,less,styl}'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+
+jobs:
+  lint-on-pull-request:
+    if: github.event_name == 'pull_request' && !contains(github.ref, 'renovate')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node (via node-version-file)
+        if: inputs.node-version-file != ''
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: '${{ inputs.node-version-file }}'
+          cache: 'yarn'
+          cache-dependency-path: '${{ inputs.working-directory }}/yarn.lock'
+      - name: Setup Node (via node-version)
+        if: inputs.node-version-file == ''
+        uses: actions/setup-node@v3
+        with:
+          node-version: '${{ inputs.node-version }}'
+          cache: 'yarn'
+          cache-dependency-path: '${{ inputs.working-directory }}/yarn.lock'
+
+      - name: Install
+        working-directory: '${{ inputs.working-directory }}'
+        run: 'yarn install --immutable'
+
+      - name: Run Pre-Script
+        if: inputs.pre-script != ''
+        working-directory: '${{ inputs.working-directory }}'
+        run: 'yarn ${{ inputs.pre-script }}'
+
+      - name: eslint
+        if: inputs.enable-eslint
+        uses: reviewdog/action-eslint@v1
+        with:
+          github_token: '${{ secrets.GITHUB_TOKEN }}'
+          reporter: '${{ inputs.reporter }}'
+          workdir: '${{ inputs.working-directory }}'
+
+      - name: prettier
+        if: inputs.enable-prettier
+        # prettier errorformat は reviewdog にはないので一旦 format したものの diff を渡す
+        # https://github.com/reviewdog/reviewdog#diff
+        working-directory: '${{ inputs.working-directory }}'
+        run: |
+          yarn format:prettier
+          TMPFILE=$(mktemp)
+          git diff > "${TMPFILE}"
+          git stash -u \
+            && git stash drop \
+            && reviewdog \
+              -name=prettier \
+              -f=diff \
+              -f.diff.strip=1 \
+              -reporter=${{ inputs.reporter }} \
+              < "${TMPFILE}" \
+            || true
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+
+      - name: stylelint
+        if: inputs.enable-stylelint
+        uses: reviewdog/action-stylelint@v1
+        with:
+          github_token: '${{ secrets.GITHUB_TOKEN }}'
+          reporter: '${{ inputs.reporter }}'
+          stylelint_input: ${{ inputs.stylelint-input }}
+          workdir: '${{ inputs.working-directory }}'
+
+      - name: Run Post-Script
+        if: inputs.post-script != ''
+        working-directory: '${{ inputs.working-directory }}'
+        run: 'yarn ${{ inputs.post-script }}'
+
+  lint-on-push:
+    if: github.event_name != 'pull_request' && !contains(github.ref, 'renovate')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '${{ inputs.node-version }}'
+          cache: 'yarn'
+          cache-dependency-path: '${{ inputs.working-directory }}/yarn.lock'
+
+      - name: Install
+        working-directory: '${{ inputs.working-directory }}'
+        run: 'yarn install --immutable'
+
+      - name: Run Pre-Script
+        if: inputs.pre-script != ''
+        working-directory: '${{ inputs.working-directory }}'
+        run: 'yarn ${{ inputs.pre-script }}'
+
+      - name: eslint
+        if: inputs.enable-eslint
+        uses: reviewdog/action-eslint@v1
+        with:
+          github_token: '${{ secrets.GITHUB_TOKEN }}'
+          reporter: 'github-check'
+          workdir: '${{ inputs.working-directory }}'
+
+      - name: prettier
+        if: inputs.enable-prettier
+        # prettier errorformat は reviewdog にはないので一旦 format したものの diff を渡す
+        # https://github.com/reviewdog/reviewdog#diff
+        working-directory: '${{ inputs.working-directory }}'
+        run: |
+          yarn format:prettier
+          TMPFILE=$(mktemp)
+          git diff > "${TMPFILE}"
+          git stash -u \
+            && git stash drop \
+            && reviewdog \
+              -name=prettier \
+              -f=diff \
+              -f.diff.strip=1 \
+              -reporter=github-check \
+              < "${TMPFILE}" \
+            || true
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+
+      - name: stylelint
+        if: inputs.enable-stylelint
+        uses: reviewdog/action-stylelint@v1
+        with:
+          github_token: '${{ secrets.GITHUB_TOKEN }}'
+          reporter: 'github-check'
+          stylelint_input: ${{ inputs.stylelint-input }}
+          workdir: '${{ inputs.working-directory }}'
+
+      - name: Run Post-Script
+        if: inputs.post-script != ''
+        working-directory: '${{ inputs.working-directory }}'
+        run: 'yarn ${{ inputs.post-script }}'

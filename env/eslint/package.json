@@ -1,0 +1,68 @@
+{
+  "name": "@darkartek/eslint-config",
+  "version": "1.0.0",
+  "license": "MIT",
+  "repository": {
+    "url": "https://github.com/DarkArtek/github-scripts",
+    "directory": "env/eslint"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "package.json",
+    "dist/*.js"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "concurrently -n lint: 'yarn:lint:*'",
+    "lint:eslint": "eslint .",
+    "lint:prettier": "prettier --check .",
+    "format": "concurrently -n format: 'yarn:format:*'",
+    "format:eslint": "yarn lint:eslint --fix",
+    "format:prettier": "yarn lint:prettier --write",
+    "clean": "rm -rf dist/*",
+    "publish": "yarn clean && yarn build && yarn npm publish"
+  },
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "5.36.1",
+    "@typescript-eslint/parser": "5.36.1",
+    "eslint-config-next": "12.2.5",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-import-resolver-typescript": "3.5.0",
+    "eslint-plugin-css-import-order": "1.1.0",
+    "eslint-plugin-editorconfig": "4.0.2",
+    "eslint-plugin-eslint-comments": "3.2.0",
+    "eslint-plugin-import": "2.26.0",
+    "eslint-plugin-jest": "27.0.1",
+    "eslint-plugin-jest-formatting": "3.1.0",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "6.0.1",
+    "eslint-plugin-react": "7.31.5",
+    "eslint-plugin-react-hooks": "4.6.0",
+    "eslint-plugin-unused-imports": "2.0.0",
+    "eslint-plugin-userscripts": "0.2.9",
+    "eslint-plugin-xss": "0.1.12"
+  },
+  "peerDependencies": {
+    "eslint": "^8",
+    "prettier": "^2",
+    "typescript": "^4"
+  },
+  "devDependencies": {
+    "@types/eslint": "8.4.6",
+    "@types/node": "17.0.41",
+    "@types/prettier": "2.7.0",
+    "concurrently": "7.3.0",
+    "eslint": "8.22.0",
+    "prettier": "2.7.1",
+    "typescript": "4.8.2"
+  },
+  "packageManager": "yarn@3.2.3",
+  "eslintConfig": {
+    "extends": [
+      "./dist/index.js"
+    ]
+  }
+}

@@ -1,0 +1,22 @@
+name: Super Linter
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    if: ${{ !contains(github.ref, 'renovate') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Lint Code Base
+        uses: github/super-linter/slim@v4
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: 'main'
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
